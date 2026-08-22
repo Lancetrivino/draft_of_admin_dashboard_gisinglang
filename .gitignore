@@ -1,0 +1,12 @@
+node_modules/
+dist/
+
+# Keep credentials out of version control. Even though this project only uses
+# the publishable key (which is safe in a browser), committing .env is a bad
+# habit that eventually leaks a real secret.
+.env
+.env.local
+.env.*.local
+
+*.log
+.DS_Store
