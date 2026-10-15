@@ -67,6 +67,7 @@ export default function Login({ onSignedIn }) {
 
   return (
     <form className="login-view" onSubmit={handleSubmit}>
+      <img src="/logo.png" alt="GisingLang logo" className="login-logo" width={64} height={64} />
       <h2>GisingLang Admin</h2>
       <p className="hint">
         System Administrator access only. Sign in with an account whose role is{" "}

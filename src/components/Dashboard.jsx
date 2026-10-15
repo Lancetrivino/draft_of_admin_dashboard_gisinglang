@@ -86,7 +86,9 @@ export default function Dashboard({ user, onSignOut }) {
   return (
     <>
       <header>
-        <div>
+        <div className="brand">
+          <img src="/logo.png" alt="GisingLang logo" width={36} height={36} />
+          <div>
           <h1>GisingLang — System Administrator Dashboard</h1>
           <div className="sub">
             <span className={`live-dot ${updatedAt ? "" : "off"}`} />
@@ -94,6 +96,7 @@ export default function Dashboard({ user, onSignOut }) {
               ? `Auto-refresh every 30 s · updated ${updatedAt.toLocaleTimeString()}`
               : "Not loaded"}{" "}
             · {user.email}
+          </div>
           </div>
         </div>
         <div className="row-actions">
