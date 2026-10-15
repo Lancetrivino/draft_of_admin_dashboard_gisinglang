@@ -1,18 +1,18 @@
-/** Top-row summary metrics (FR8: aggregate system metrics). */
-export default function StatCards({ events, users, devices }) {
-  const combined = events.filter((e) => e.alert_level === "COMBINED").length;
+/** Top-row summary metrics (FR8: anonymized aggregate system metrics). */
+export default function StatCards({ summary, users, devices }) {
   const drivers = users.filter((u) => u.role === "Driver").length;
   const admins = users.length - drivers;
   const activeDevices = devices.filter((d) => d.status === "Active").length;
+  const n = (v) => (summary ? Number(v ?? 0).toLocaleString() : "—");
 
   return (
     <div className="stats">
       <Card
-        label="Total Events"
-        value={events.length >= 1000 ? "1000+" : events.length}
-        foot="all time"
+        label="Total Alerts"
+        value={n(summary?.total_events)}
+        foot={summary ? `${n(summary.events_last_7d)} in the last 7 days` : "all time"}
       />
-      <Card label="Combined Alerts" value={combined} foot="highest severity" />
+      <Card label="Combined Alerts" value={n(summary?.combined_events)} foot="highest severity" />
       <Card
         label="Registered Users"
         value={users.length}
@@ -21,7 +21,11 @@ export default function StatCards({ events, users, devices }) {
       <Card
         label="Active Devices"
         value={activeDevices}
-        foot={`of ${devices.length} registered`}
+        foot={
+          summary
+            ? `of ${devices.length} registered · ${n(summary.devices_reporting_24h)} reporting today`
+            : `of ${devices.length} registered`
+        }
       />
     </div>
   );

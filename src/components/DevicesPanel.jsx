@@ -3,10 +3,35 @@ import { supabase } from "../lib/supabase";
 import { fmtDate, fmtDateTime } from "../lib/format";
 
 /** Device registration, status control, and firmware tracking (FR8). */
-export default function DevicesPanel({ devices, onChanged, onError }) {
+export default function DevicesPanel({ devices, users, onChanged, onError }) {
   const [unitLabel, setUnitLabel] = useState("");
   const [firmware, setFirmware] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const drivers = (users ?? []).filter((u) => u.role === "Driver");
+
+  function driverLabel(userId) {
+    if (!userId) return null;
+    const match = (users ?? []).find((u) => u.user_id === userId);
+    return match ? match.email : "(unknown driver)";
+  }
+
+  // Every event a device logs is attributed to whoever owns it at insert
+  // time (see the attach_event_owner trigger), so reassigning here changes
+  // where *future* events land — it does not move history that's already
+  // been written under the previous owner.
+  async function assignOwner(device, userId) {
+    const { error } = await supabase
+      .from("devices")
+      .update({ user_id: userId || null })
+      .eq("device_id", device.device_id);
+    if (error) {
+      onError("Could not reassign device: " + error.message);
+      return;
+    }
+    onError("");
+    onChanged();
+  }
 
   async function registerDevice() {
     const label = unitLabel.trim();
@@ -90,6 +115,7 @@ export default function DevicesPanel({ devices, onChanged, onError }) {
               <th>Unit</th>
               <th>Status</th>
               <th>Firmware</th>
+              <th>Driver</th>
               <th>Last seen</th>
               <th>Registered</th>
               <th />
@@ -105,6 +131,25 @@ export default function DevicesPanel({ devices, onChanged, onError }) {
                   <span className={`pill ${d.status}`}>{d.status}</span>
                 </td>
                 <td className="mono">{d.firmware_version ?? "—"}</td>
+                <td>
+                  <select
+                    value={d.user_id ?? ""}
+                    onChange={(e) => assignOwner(d, e.target.value)}
+                    title={driverLabel(d.user_id) ?? "Unassigned — new events won't be attributed to anyone"}
+                  >
+                    <option value="">— Unassigned —</option>
+                    {drivers.map((u) => (
+                      <option key={u.user_id} value={u.user_id}>
+                        {u.email}
+                      </option>
+                    ))}
+                    {/* Keeps the current owner selectable even if their role
+                        changed or they're somehow not in the Driver list. */}
+                    {d.user_id && !drivers.some((u) => u.user_id === d.user_id) && (
+                      <option value={d.user_id}>{driverLabel(d.user_id)}</option>
+                    )}
+                  </select>
+                </td>
                 <td className="mono">
                   {d.last_seen_at ? fmtDateTime(d.last_seen_at) : "never"}
                 </td>
